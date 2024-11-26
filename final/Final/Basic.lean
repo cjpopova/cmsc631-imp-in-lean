@@ -43,6 +43,65 @@ def beval (b : bexp) : Bool :=
   | BNot b1     => ¬ (beval b1)
   | BAnd b1 b2  =>  (beval b1) ∧ (beval b2)
 
+
+#eval aeval (ANum 5)
+
+theorem test2: aeval (APlus (ANum 2) (ANum 2)) = 4 :=
+by rfl
+
+
 ---------------- Evaluation as a Relation ----------------------
 
+inductive aevalR : aexp -> Nat -> Prop where
+  | E_ANum (n : Nat) :
+      aevalR (ANum n) n
+  | E_APlus (e1 e2 : aexp) (n1 n2 : Nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (APlus e1 e2) (n1 + n2)
+  | E_AMinus (e1 e2 : aexp) (n1 n2 : Nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (AMinus e1 e2) (n1 - n2)
+  | E_AMult (e1 e2 : aexp) (n1 n2 : Nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (AMult e1 e2) (n1 * n2)
 
+inductive bevalR: bexp -> Bool -> Prop where
+  | E_BTrue : bevalR BTrue true
+  | E_BFalse : bevalR BFalse false
+  | E_BEq : ∀ (a1 a2 : aexp) (n1 n2 : Nat),
+      (aevalR a1 n1) ->
+      (aevalR a2 n2) ->
+      bevalR (BEq a1 a2) (n1 = n2)
+  | E_BNeq : ∀ (a1 a2 : aexp) (n1 n2 : Nat),
+    (aevalR a1 n1) ->
+    (aevalR a2 n2) ->
+    bevalR (BNeq a1 a2) (¬ (n1 = n2))
+  | E_BLe : ∀ (a1 a2 : aexp) (n1 n2 : Nat),
+    (aevalR a1 n1) ->
+    (aevalR a2 n2) ->
+    bevalR (BLe a1 a2) (n1 <= n2)
+  | E_BGt : ∀ (a1 a2 : aexp) (n1 n2 : Nat),
+    (aevalR a1 n1) ->
+    (aevalR a2 n2) ->
+    bevalR (BGt a1 a2) (¬ (n1 <= n2))
+  | E_BNot : ∀ (b : bexp) (b' : Bool),
+    (bevalR b b') ->
+    bevalR (BNot b) (¬b')
+  | E_BAnd : ∀ (b1 b2 : bexp) (b1' b2' : Bool),
+    (bevalR b1 b1') ->
+    (bevalR b2 b2') ->
+    bevalR (BAnd b1 b2) (and b1' b2')
+
+-- Add notation
+infixl:65   " ==> " => aevalR  -- left-associative
+infixl:65   " ==>b " => bevalR  -- left-associative
+
+theorem aeval_iff_aevalR : ∀ a n, (a ==> n) <-> aeval a = n := by
+  intros
+    split
+    admit
+  admit
+  
