@@ -100,8 +100,20 @@ infixl:65   " ==> " => aevalR  -- left-associative
 infixl:65   " ==>b " => bevalR  -- left-associative
 
 theorem aeval_iff_aevalR : ∀ a n, (a ==> n) <-> aeval a = n := by
-  intros
-    split
-    admit
-  admit
-  
+  intros a n
+  constructor
+  · intros H
+    induction H <;> try
+      {rw [aeval]; rename_i H1_ih H2_ih; rw [H1_ih]; rw [H2_ih]}
+    rfl
+  . revert n; induction a <;> intros n H;
+    . rw [aeval.eq_def] at H; simp at H; rewrite [H]; constructor
+    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_APlus;
+      apply a1_ih; rfl; apply a2_ih; rfl
+    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_AMinus;
+      apply a1_ih; rfl; apply a2_ih; rfl
+    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_AMult;
+      apply a1_ih; rfl; apply a2_ih; rfl
+
+
+#check aeval_iff_aevalR
