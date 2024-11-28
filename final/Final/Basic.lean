@@ -99,6 +99,8 @@ inductive bevalR: bexp -> Bool -> Prop where
 infixl:65   " ==> " => aevalR  -- left-associative
 infixl:65   " ==>b " => bevalR  -- left-associative
 
+---------  Equivalence of evaluation as functions vs relations ------------
+
 theorem aeval_iff_aevalR : ∀ a n, (a ==> n) <-> aeval a = n := by
   intros a n
   constructor
@@ -107,13 +109,32 @@ theorem aeval_iff_aevalR : ∀ a n, (a ==> n) <-> aeval a = n := by
       {rw [aeval]; rename_i H1_ih H2_ih; rw [H1_ih]; rw [H2_ih]}
     rfl
   . revert n; induction a <;> intros n H;
-    . rw [aeval.eq_def] at H; simp at H; rewrite [H]; constructor
-    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_APlus;
+    case mpr.ANum n =>
+      rw [aeval.eq_def] at H; simp at H; rewrite [H]; constructor
+    case mpr.APlus a1_ih a2_ih =>
+      rw [<- H]; rw [aeval]; apply aevalR.E_APlus;
       apply a1_ih; rfl; apply a2_ih; rfl
-    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_AMinus;
+    case mpr.AMinus a1_ih a2_ih =>
+      rw [<- H]; rw [aeval]; apply aevalR.E_AMinus;
       apply a1_ih; rfl; apply a2_ih; rfl
-    . rename_i a1_ih a2_ih; rw [<- H]; rw [aeval]; apply aevalR.E_AMult;
+    case mpr.AMult a1_ih a2_ih =>
+      rw [<- H]; rw [aeval]; apply aevalR.E_AMult;
       apply a1_ih; rfl; apply a2_ih; rfl
 
-
-#check aeval_iff_aevalR
+theorem beval_iff_bevalR : ∀ b bv, b ==>b bv <-> beval b = bv := by
+  intros b bv
+  constructor
+  . intros H
+    induction H
+      -- 2 IH on arithmetic operands (le, gt, etc)
+      <;> try { rw [beval]; rename_i H1_ih H2_ih; rw [aeval_iff_aevalR] at H1_ih; rw [aeval_iff_aevalR] at H2_ih; rw [H1_ih]; rw [H2_ih] }
+      -- base cases
+      <;> try { rfl }
+    -- 1 IH on boolean
+    rw [beval]; rename_i H1_ih; rw [H1_ih]
+    -- 2 IH on boolean
+    rw [beval]; rename_i H1_ih H2_ih; rw [H1_ih]; rw [H2_ih]; simp
+  . revert bv; induction b <;> intros b H
+      <;> try { rw [beval.eq_def] at H; simp at H; rewrite [H]; constructor }
+    case mpr.BEq a1 a2 =>
+      rw [<- H]; rw [beval]; apply bevalR.E_BEq; apply aeval_iff_aevalR
