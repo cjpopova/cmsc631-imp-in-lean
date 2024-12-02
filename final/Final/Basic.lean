@@ -1,5 +1,24 @@
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Finsupp.AList
 
+def total_map (A : Type) := String -> A
+
+def t_empty {A: Type} (v: A) : total_map A :=
+(fun _ => v)
+
+def t_update {A: Type}(m: total_map A)(x: String)(v :A) :=
+  fun y => if (x == y) then v else (m y)
+
+notation:max "_ !->" v => (t_empty v)
+notation:max x "!->" v ";" m => (t_update m x v)
+
+def ex_map := "y" !-> 6; ("x" !-> 3; (_ !-> 0))
+
+#eval (t_update ex_map "x" 4) "x"
+
+def state := total_map Nat
+
+namespace no_state
 inductive aexp where
   | ANum (n : Nat)
   | APlus (a1 a2 : aexp)
@@ -43,11 +62,6 @@ def beval (b : bexp) : Bool :=
   | BNot b1     => ¬ (beval b1)
   | BAnd b1 b2  =>  (beval b1) ∧ (beval b2)
 
-
-#eval aeval (ANum 5)
-
-theorem test2: aeval (APlus (ANum 2) (ANum 2)) = 4 :=
-by rfl
 
 
 ---------------- Evaluation as a Relation ----------------------
@@ -138,3 +152,53 @@ theorem beval_iff_bevalR : ∀ b bv, b ==>b bv <-> beval b = bv := by
       <;> try { rw [beval.eq_def] at H; simp at H; rewrite [H]; constructor }
     case mpr.BEq a1 a2 =>
       rw [<- H]; rw [beval]; apply bevalR.E_BEq; apply aeval_iff_aevalR
+
+end no_state
+
+namespace with_state
+
+inductive aexp where
+  | ANum (n : Nat)
+  | AId (x: String)
+  | APlus (a1 a2 : aexp)
+  | AMinus (a1 a2 : aexp)
+  | AMult (a1 a2 : aexp)
+
+inductive bexp where
+  | BTrue
+  | BFalse
+  | BEq (a1 a2 : aexp)
+  | BNeq (a1 a2 : aexp)
+  | BLe (a1 a2 : aexp)
+  | BGt (a1 a2 : aexp)
+  | BNot (b : bexp)
+  | BAnd (b1 b2 : bexp)
+
+open aexp
+
+def aeval (st: state)(a : aexp) : Nat :=
+  match a with
+  | ANum n => n
+  | AId x => st x
+  | APlus  a1 a2 => (aeval st a1) + (aeval st a2)
+  | AMinus a1 a2 => (aeval st a1) - (aeval st a2)
+  | AMult  a1 a2 => (aeval st a1) * (aeval st a2)
+
+open bexp
+def beval (st: state)(b : bexp) : Bool :=
+  match b with
+  | BTrue       => true
+  | BFalse      => false
+  | bexp.BEq a1 a2   => (aeval st a1) = (aeval st a2)
+  | BNeq a1 a2  => ¬ ((aeval st a1) = (aeval st a2))
+  | BLe a1 a2   => (aeval st a1) <= (aeval st a2)
+  | BGt a1 a2   => ¬ ((aeval st a1) <= (aeval st a2))
+  | BNot b1     => ¬ (beval st b1)
+  | BAnd b1 b2  =>  (beval st b1) ∧ (beval st b2)
+
+#eval aeval (_ !-> 0) (ANum  5)
+
+theorem test2: aeval (_ !-> 0) (APlus (ANum 2) (ANum 2)) = 4 :=
+by rfl
+
+end with_state
