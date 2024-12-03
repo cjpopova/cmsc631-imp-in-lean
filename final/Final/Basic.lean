@@ -151,7 +151,30 @@ theorem beval_iff_bevalR : ∀ b bv, b ==>b bv <-> beval b = bv := by
   . revert bv; induction b <;> intros b H
       <;> try { rw [beval.eq_def] at H; simp at H; rewrite [H]; constructor }
     case mpr.BEq a1 a2 =>
-      rw [<- H]; rw [beval]; apply bevalR.E_BEq; apply aeval_iff_aevalR
+      rw [<- H]; rw [beval]; apply bevalR.E_BEq;
+      . have aiar := aeval_iff_aevalR a1 (aeval a1); apply aiar.mpr; rfl;
+      . have aiar := aeval_iff_aevalR a2 (aeval a2); apply aiar.mpr; rfl;
+    case mpr.BNeq a1 a2 =>
+      rw [<- H]; rw [beval]; apply bevalR.E_BNeq;
+      . have aiar := aeval_iff_aevalR a1 (aeval a1); apply aiar.mpr; rfl;
+      . have aiar := aeval_iff_aevalR a2 (aeval a2); apply aiar.mpr; rfl;
+    case mpr.BLe a1 a2 =>
+      rw [<- H]; rw [beval]; apply bevalR.E_BLe;
+      . have aiar := aeval_iff_aevalR a1 (aeval a1); apply aiar.mpr; rfl;
+      . have aiar := aeval_iff_aevalR a2 (aeval a2); apply aiar.mpr; rfl;
+    case mpr.BGt a1 a2 =>
+      rw [<- H]; rw [beval]; apply bevalR.E_BGt;
+      . have aiar := aeval_iff_aevalR a1 (aeval a1); apply aiar.mpr; rfl;
+      . have aiar := aeval_iff_aevalR a2 (aeval a2); apply aiar.mpr; rfl;
+    case mpr.BNot b1 H1 =>
+      rw [<- H]; rw [beval]; apply bevalR.E_BNot; apply H1; rfl
+    case mpr.BAnd b1 b2 H1 H2 =>
+      rw [<- H]; rw [beval]; simp; apply bevalR.E_BAnd;
+      . apply H1; rfl
+      . apply H2; rfl
+
+
+
 
 end no_state
 
@@ -208,6 +231,43 @@ inductive com : Type where
   | CSeq (c1 c2 : com)
   | CIf (b : bexp) (c1 c2 : com)
   | CWhile (b : bexp) (c : com)
+
+namespace Test
+
+notation: max "<{" e "}>" => e
+
+notation: max "(" x ")" => x
+
+
+notation: max "x" + "y" => APlus x y (in custom com at level 50, left associativity)
+notation: max "x - y" => AMinus x y (in custom com at level 50, left associativity)
+notation: max "x * y" => AMult x y (in custom com at level 40, left associativity)
+notation: max "'true'" => true (at level 1)
+notation: max "'true'" => BTrue (in custom com at level 0)
+notation: max "'false'" => false (at level 1)
+notation: max "'false'" => BFalse (in custom com at level 0)
+notation: max "x <= y" => BLe x y (in custom com at level 70, no associativity)
+notation: max "x > y" => BGt x y (in custom com at level 70, no associativity)
+notation: max "x = y" => BEq x y (in custom com at level 70, no associativity)
+notation: max "x <> y" => BNeq x y (in custom com at level 70, no associativity)
+notation: max "x && y" => BAnd x y (in custom com at level 80, left associativity)
+notation: max "'~' b" => BNot b (in custom com at level 75, right associativity)
+
+end Test
+
+-- Open the custom scope for `com_scope`
+open_locale com_scope
+
+-- Example arithmetic and boolean expressions
+def example_aexp : aexp := <{ 3 + (X * 2) }>
+def example_bexp : bexp := <{ true && ~(X <= 4) }>
+
+-- Open the scope for `com_scope`
+open_locale com_scope
+
+-- Example arithmetic and boolean expressions
+def example_aexp : aexp := <{ 3 + (X * 2) }>
+def example_bexp : bexp := <{ true && ~(X <= 4) }>
 
 
 open com
