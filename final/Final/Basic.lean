@@ -238,20 +238,19 @@ notation: max "<{" e "}>" => e
 
 notation: max "(" x ")" => x
 
-
-notation: max "x" + "y" => APlus x y (in custom com at level 50, left associativity)
-notation: max "x - y" => AMinus x y (in custom com at level 50, left associativity)
-notation: max "x * y" => AMult x y (in custom com at level 40, left associativity)
-notation: max "'true'" => true (at level 1)
-notation: max "'true'" => BTrue (in custom com at level 0)
-notation: max "'false'" => false (at level 1)
-notation: max "'false'" => BFalse (in custom com at level 0)
-notation: max "x <= y" => BLe x y (in custom com at level 70, no associativity)
-notation: max "x > y" => BGt x y (in custom com at level 70, no associativity)
-notation: max "x = y" => BEq x y (in custom com at level 70, no associativity)
-notation: max "x <> y" => BNeq x y (in custom com at level 70, no associativity)
-notation: max "x && y" => BAnd x y (in custom com at level 80, left associativity)
-notation: max "'~' b" => BNot b (in custom com at level 75, right associativity)
+notation: max x "+" y => APlus x y -- (in custom com at level 50, left associativity)
+notation: max x "-" y => AMinus x y  -- (in custom com at level 50, left associativity)
+notation: max x "*" y => AMult x y -- (in custom com at level 40, left associativity)
+-- notation: max "true'" => true -- (at level 1)
+notation: max "True" => BTrue -- (in custom com at level 0)
+-- notation: max "'false'" => false (at level 1)
+notation: max "False" => BFalse -- (in custom com at level 0)
+notation: max x "<=" y => BLe x y -- (in custom com at level 70, no associativity)
+notation: max x ">" y => BGt x y -- (in custom com at level 70, no associativity)
+notation: max x "=" y => BEq x y --(in custom com at level 70, no associativity)
+notation: max x "<>" y => BNeq x y -- (in custom com at level 70, no associativity)
+notation: max x "&&" y => BAnd x y -- (in custom com at level 80, left associativity)
+notation: max "~" b => BNot b  -- (in custom com at level 75, right associativity)
 
 end Test
 
