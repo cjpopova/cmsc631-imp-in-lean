@@ -201,4 +201,46 @@ def beval (st: state)(b : bexp) : Bool :=
 theorem test2: aeval (_ !-> 0) (APlus (ANum 2) (ANum 2)) = 4 :=
 by rfl
 
+open with_state
+inductive com : Type where
+  | CSkip
+  | CAsgn (x : String) (a : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CWhile (b : bexp) (c : com)
+
+
+open com
+notation: max "skip" => CSkip
+notation: max x "::=" y => (CAsgn x y)
+notation: max x ";" y => (CSeq x y)
+notation: max "if" x "then" y "else" z "endL" => (CIf x y z)
+notation: max "while" x "doW" y "endL" => (CWhile x y)
+
+
+open with_state
+#eval (ANum 1)
+
+open with_state
+def fact_in_lean : com :=
+("Z" ::= (AId "X")) ;
+("Y" ::= (ANum 1)) ;
+while (BNeq (AId "Z") (ANum 0)) doW
+  ("Y" ::= (AId "Y")) ;
+  ("Y" ::= (ANum 1)) ;
+
+
+
+
+
+-- Y := (ANum 1);
+-- while (Z != 0) doW (Y := (Y * Z)) endL
+
+
+-- notation:max "_ !->" v => (t_empty v)
+-- notation:max x "!->" v ";" m => (t_update m x v)
+
+-- def ex_map := "y" !-> 6; ("x" !-> 3; (_ !-> 0))
+
+
 end with_state
