@@ -234,9 +234,21 @@ inductive com : Type where
 
 namespace Test
 
+-- @[coercion]
+-- def AId : String → aexp := aexp.AId
+
+instance : OfNat aexp (n : Nat) where
+  ofNat := aexp.ANum n
+
+instance : Coe String aexp where
+  coe := aexp.AId
+
+-- @[coercion]
+-- def ANum : Nat → aexp := aexp.ANum
+
 notation: max "<{" e "}>" => e
 
-notation: max "(" x ")" => x
+notation: max (priority := 2000) "(" x ")" => x
 
 notation: max (priority := high) x "+" y => APlus x y -- (in custom com at level 50, left associativity)
 notation: max (priority := high) x "-" y => AMinus x y  -- (in custom com at level 50, left associativity)
@@ -251,23 +263,30 @@ notation: max (priority := high) x "=" y => BEq x y --(in custom com at level 70
 notation: max (priority := high) x "<>" y => BNeq x y -- (in custom com at level 70, no associativity)
 notation: max (priority := high) x "&&" y => BAnd x y -- (in custom com at level 80, left associativity)
 notation: max (priority := high) "~" b => BNot b  -- (in custom com at level 75, right associativity)
-
+def W : String := "W"
+def X : String := "X"
+def Y : String := "Y"
+def Z : String := "Z"
 
 end Test
 
 -- Open the custom scope for `com_scope`
-open_locale com_scope
+-- open_locale com_scope
 
 -- Example arithmetic and boolean expressions
-def example_aexp : aexp := <{3 + ((AId X) * 2)}>
-def example_bexp : bexp := <{ true && ~(X <= 4) }>
+section
+open Test
+def example_aexp111 : aexp := <{(X * 2)}>
+def example_aexp : aexp := <{3 + (X * 2) }>
+def example_bexp : bexp := <{ True && ~(X <= 4) }>
+end
 
 -- Open the scope for `com_scope`
-open_locale com_scope
+-- open_locale com_scope
 
--- Example arithmetic and boolean expressions
-def example_aexp : aexp := <{ 3 + (X * 2) }>
-def example_bexp : bexp := <{ true && ~(X <= 4) }>
+-- -- Example arithmetic and boolean expressions
+-- def example_aexp : aexp := <{ 3 + (X * 2) }>
+-- def example_bexp : bexp := <{ true && ~(X <= 4) }>
 
 
 open com
