@@ -10,9 +10,9 @@ def t_update {A: Type}(m: total_map A)(x: String)(v :A) :=
   fun y => if (x == y) then v else (m y)
 
 notation:max "_ !->" v => (t_empty v)
-notation:max x "!->" v ";" m => (t_update m x v)
+notation:max x "!->" v "≀" m => (t_update m x v) -- unicode symbol: wr
 
-def ex_map := "y" !-> 6; ("x" !-> 3; (_ !-> 0))
+def ex_map := "y" !-> 6 ≀ ("x" !-> 3 ≀ (_ !-> 0))
 
 #eval (t_update ex_map "x" 4) "x"
 
@@ -259,7 +259,7 @@ notation: max (priority := high) "True" => BTrue -- (in custom com at level 0)
 notation: max (priority := high) "False" => BFalse -- (in custom com at level 0)
 notation: max (priority := high) x "<=" y => BLe x y -- (in custom com at level 70, no associativity)
 notation: max (priority := high) x ">" y => BGt x y -- (in custom com at level 70, no associativity)
-notation: max (priority := high) x "=" y => BEq x y --(in custom com at level 70, no associativity)
+notation: max (priority := high) x "==" y => BEq x y --(in custom com at level 70, no associativity)
 notation: max (priority := high) x "<>" y => BNeq x y -- (in custom com at level 70, no associativity)
 notation: max (priority := high) x "&&" y => BAnd x y -- (in custom com at level 80, left associativity)
 notation: max (priority := high) "~" b => BNot b  -- (in custom com at level 75, right associativity)
@@ -301,15 +301,24 @@ open with_state
 #eval (ANum 1)
 
 open with_state
-def fact_in_lean : com :=
+
+def ex_1 : com := ("Z" ::= (AId "X"))
+
+def ex_2 : com :=
 ("Z" ::= (AId "X")) ;
 ("Y" ::= (ANum 1)) ;
 while (BNeq (AId "Z") (ANum 0)) doW
   ("Y" ::= (AId "Y")) ;
-  ("Y" ::= (ANum 1)) ;
+  ("Y" ::= (ANum 1))
+endL
 
-
-
+def fact_in_lean : com :=
+("Z" ::= "X") ;
+("Y" ::= 1) ;
+while (BNeq (AId "Z") (ANum 0)) doW
+  ("Y" ::= "Y" * "Z") ;
+  ("Y" ::= "Z" - 1)
+endL
 
 
 -- Y := (ANum 1);
@@ -321,5 +330,52 @@ while (BNeq (AId "Z") (ANum 0)) doW
 
 -- def ex_map := "y" !-> 6; ("x" !-> 3; (_ !-> 0))
 
+def Assertion := state -> Prop
+
+open aexp
+
+namespace ExampleAssertions
+  --def assertion1 : Assertion := fun (st : state) => st "X" <= st "Y"
+end ExampleAssertions
+
+def assert_implies (P Q : Assertion) : Prop := forall st, P st -> Q st
+
+notation:max P "->>" Q   => (assert_implies P Q)
+notation:max P "<<->>" Q => (P ->> Q /\ Q ->> P)
+
+inductive ceval : com -> state -> state -> Prop where
+  | E_Skip : forall st,
+      ceval skip st st
+  | E_Asgn  : forall st a1 n x,
+      aeval st a1 = n ->
+      ceval (CAsgn x a1) st (x !-> n ≀ st)
+  | E_Seq : forall c1 c2 st st' st'',
+      ceval c1 st st'  ->
+      ceval c2 st' st'' ->
+      ceval (c1 ; c2) st st''
+  | E_IfTrue : forall st st' b c1 c2,
+      beval st b = true ->
+      ceval c1 st st' ->
+      ceval (if b then c1 else c2 endL) st st'
+  | E_IfFalse : forall st st' b c1 c2,
+      beval st b = false ->
+      ceval c2 st st' ->
+      ceval (if b then c1 else c2 endL) st  st'
+  | E_WhileFalse : forall b st c,
+      beval st b = false ->
+      ceval (while b doW c endL) st st
+  | E_WhileTrue : forall st st' st'' b c,
+      beval st b = true ->
+      ceval c st st' ->
+      ceval (while b doW c endL) st' st'' ->
+      ceval (while b doW c endL) st  st''
+
+notation:max st "=[" c "]=>" st2 => (ceval c st st2) -- this notation doesn't actually work so I can't use it below
+
+def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
+  forall (st : state) (st' : state),
+     (ceval c st st') -> --st =[ c ]=> st' ->
+     P st  ->
+     Q st'
 
 end with_state
