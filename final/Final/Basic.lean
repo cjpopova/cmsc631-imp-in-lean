@@ -331,12 +331,17 @@ endL
 
 -- def ex_map := "y" !-> 6; ("x" !-> 3; (_ !-> 0))
 
+
+------------ BEGIN HOARE --------------
 def Assertion := state -> Prop
 
 open aexp
 
 namespace ExampleAssertions
-  --def assertion1 : Assertion := fun (st : state) => st "X" <= st "Y"
+  def assertion1 : Assertion := fun (st) => (st "X") < (st "Y")
+  def assertion2 : Assertion := fun (st) => (st "X") = 3 \/ (st "X") < (st "Y")
+  --def assertion3 : Assertion := fun st => st "Z" * st "Z" < (st "X") /\ ~ (((S + (st "Z")) * (S (st "Z"))) <= st "X")
+
 end ExampleAssertions
 
 def assert_implies (P Q : Assertion) : Prop := forall st, P st -> Q st
@@ -378,6 +383,8 @@ def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
      (ceval c st st') -> --st =[ c ]=> st' ->
      P st  ->
      Q st'
+
+----------- END HOARE ------------------------
 
 /-theorem while_ex1 : ∀ st,
   st =[while ((AId "X") <= (ANum 4)) doW
