@@ -383,6 +383,18 @@ def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
   forall (st : state) (st' : state),
   (st =[ c ]=> st') -> P st -> (Q st')
 
+notation:max "⦃" P "⦄" c "⦃" Q "⦄" => (valid_hoare_triple P c Q) -- (this doesn't work) double braces with {{ }}
+
+theorem hoare_post_true : forall (P Q : Assertion) c,
+  (forall st, Q st) ->
+  (valid_hoare_triple P c Q) --(⦃P⦄ c ⦃Q⦄)
+   := by
+  intros P Q c H
+  unfold valid_hoare_triple
+  intros st st' H0 H1
+  apply H st'
+
+
 ----------- END HOARE ------------------------
 
 /-theorem while_ex1 : ∀ st,
