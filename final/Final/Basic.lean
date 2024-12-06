@@ -376,13 +376,12 @@ inductive ceval : com -> state -> state -> Prop where
       ceval (while b doW c endL) st' st'' ->
       ceval (while b doW c endL) st  st''
 
-notation:max st "=[" c "]=>" st2 => (ceval c st st2) -- this notation doesn't actually work so I can't use it below
+notation:max st "=[" c "]=>" st2 => (ceval c st st2)
+
 
 def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
   forall (st : state) (st' : state),
-     (ceval c st st') -> --st =[ c ]=> st' ->
-     P st  ->
-     Q st'
+  (st =[ c ]=> st') -> P st -> (Q st')
 
 ----------- END HOARE ------------------------
 
