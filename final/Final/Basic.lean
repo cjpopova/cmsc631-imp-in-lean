@@ -17,6 +17,7 @@ def ex_map := "y" !-> 6 ≀ ("x" !-> 3 ≀ (_ !-> 0))
 #eval (t_update ex_map "x" 4) "x"
 
 def state := total_map Nat
+def empty_st := (_ !-> 0)
 
 namespace no_state
 inductive aexp where
@@ -292,7 +293,7 @@ end
 open com
 notation: max "skip" => CSkip
 notation: max x "::=" y => (CAsgn x y)
-notation: max x ";" y => (CSeq x y)
+notation: max x ";;" y => (CSeq x y)
 notation: max "if" x "then" y "else" z "endL" => (CIf x y z)
 notation: max "while" x "doW" y "endL" => (CWhile x y)
 
@@ -305,18 +306,18 @@ open with_state
 def ex_1 : com := ("Z" ::= (AId "X"))
 
 def ex_2 : com :=
-("Z" ::= (AId "X")) ;
-("Y" ::= (ANum 1)) ;
+("Z" ::= (AId "X")) ;;
+("Y" ::= (ANum 1)) ;;
 while (BNeq (AId "Z") (ANum 0)) doW
-  ("Y" ::= (AId "Y")) ;
+  ("Y" ::= (AId "Y")) ;;
   ("Y" ::= (ANum 1))
 endL
 
 def fact_in_lean : com :=
-("Z" ::= "X") ;
-("Y" ::= 1) ;
+("Z" ::= "X") ;;
+("Y" ::= 1) ;;
 while (BNeq (AId "Z") (ANum 0)) doW
-  ("Y" ::= "Y" * "Z") ;
+  ("Y" ::= "Y" * "Z") ;;
   ("Y" ::= "Z" - 1)
 endL
 
@@ -352,7 +353,7 @@ inductive ceval : com -> state -> state -> Prop where
   | E_Seq : forall c1 c2 st st' st'',
       ceval c1 st st'  ->
       ceval c2 st' st'' ->
-      ceval (c1 ; c2) st st''
+      ceval (c1 ;; c2) st st''
   | E_IfTrue : forall st st' b c1 c2,
       beval st b = true ->
       ceval c1 st st' ->
@@ -378,4 +379,55 @@ def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
      P st  ->
      Q st'
 
+/-theorem while_ex1 : ∀ st,
+  st =[while ((AId "X") <= (ANum 4)) doW
+    (("Y" ::= "Y" + 2); ("X" ::= "X" + 1)) endL]=> := -/
+
+theorem ceval_example1:
+    empty_st =[
+       ("X" ::= (ANum 2));;
+      if ("X" <= 1)
+        then "Y" ::= 3
+        else "Z" ::= 4
+      endL
+   ]=> ("Z" !-> 4 ≀ ("X" !-> 2 ≀ empty_st)) := by
+  apply ceval.E_Seq (CAsgn "X" (ANum 2)) (CIf ("X" <= 1) ("Y" ::= 3) ("Z" ::= 4)) empty_st ("X" !-> 2 ≀ empty_st) ("Z" !-> 4 ≀ ("X" !-> 2 ≀ empty_st))
+  · apply ceval.E_Asgn
+    rfl
+  · apply ceval.E_IfFalse
+    · rfl
+    · apply ceval.E_Asgn
+      rfl
+
+theorem ceval_deterministic: ∀ c st st1 st2,
+  (st =[ c ]=> st1)  ->
+  (st =[ c ]=> st2) ->
+  st1 = st2 := by
+  intros c st st1 st2 E1 E2
+  revert st2
+  induction E1; intros st2 E2; cases E2; subst
+ /--/
+ 1608   induction E1; intros st2 E2; inversion E2; subst.
+ 1609   - (* E_Skip *) reflexivity.
+ 1610   - (* E_Asgn *) reflexivity.
+ 1611   - (* E_Seq *)
+ 1612     rewrite (IHE1_1 st'0 H1) in *.
+ 1613     apply IHE1_2. assumption.
+ 1614   - (* E_IfTrue, b evaluates to true *)
+ 1615       apply IHE1. assumption.
+ 1616   - (* E_IfTrue,  b evaluates to false (contradiction) *)
+ 1617       rewrite H in H5. discriminate.
+ 1618   - (* E_IfFalse, b evaluates to true (contradiction) *)
+ 1619       rewrite H in H5. discriminate.
+ 1620   - (* E_IfFalse, b evaluates to false *)
+ 1621       apply IHE1. assumption.
+ 1622   - (* E_WhileFalse, b evaluates to false *)
+ 1623     reflexivity.
+ 1624   - (* E_WhileFalse, b evaluates to true (contradiction) *)
+ 1625     rewrite H in H2. discriminate.
+ 1626   - (* E_WhileTrue, b evaluates to false (contradiction) *)
+ 1627     rewrite H in H4. discriminate.
+ 1628   - (* E_WhileTrue, b evaluates to true *)
+ 1629     rewrite (IHE1_1 st'0 H3) in *.
+ 1630     apply IHE1_2. assumption.  Qed. -/
 end with_state
