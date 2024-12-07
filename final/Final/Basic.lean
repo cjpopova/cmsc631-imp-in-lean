@@ -347,7 +347,7 @@ end ExampleAssertions
 def assert_implies (P Q : Assertion) : Prop := forall st, P st -> Q st
 
 notation:max P "->>" Q   => (assert_implies P Q)
-notation:max P "<<->>" Q => (P ->> Q /\ Q ->> P)
+--notation:max P "<<->>" Q => (P ->> Q /\ Q ->> P)
 
 inductive ceval : com -> state -> state -> Prop where
   | E_Skip : forall st,
@@ -378,17 +378,17 @@ inductive ceval : com -> state -> state -> Prop where
 
 notation:max st "=[" c "]=>" st2 => (ceval c st st2)
 
-
 def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
   forall (st : state) (st' : state),
   (st =[ c ]=> st') -> P st -> (Q st')
 
-notation:max "⦃" P "⦄" c "⦃" Q "⦄" => (valid_hoare_triple P c Q) -- (this doesn't work) double braces with {{ }}
+-- This notation doesn't work.
+notation:max "{{" P "}}" c "{{" Q "}}" => (valid_hoare_triple P c Q)
 
 -- Example hoare proof
 theorem hoare_post_true : forall (P Q : Assertion) c,
   (forall st, Q st) ->
-  (valid_hoare_triple P c Q) --(⦃P⦄ c ⦃Q⦄)
+  (valid_hoare_triple P c Q) --({{P}} c {{Q}})
    := by
   intros P Q c H
   unfold valid_hoare_triple
@@ -407,17 +407,77 @@ theorem hoare_seq : forall P Q R c1 c2,
   unfold valid_hoare_triple
   intros P Q R c1 c2 H1 H2 st st' H12 Pre
   cases H12
-  . apply H1 st'
-    rename_i st'' a a1
-    sorry
+  . rename_i st'' HC1 HC2
+    apply H1 st'' st'
+    apply HC2
+    apply H2 st st''
+    apply HC1
+    apply Pre
 
-/-Proof.
-  unfold valid_hoare_triple.
-  intros P Q R c1 c2 H1 H2 st st' H12 Pre.
-  inversion H12; subst.
-  eauto. (* automatically do stuff with H1 and H2*)
-Qed.
--/
+def assertion_sub (X : String) (a : aexp) (P:Assertion) : Assertion :=
+  fun (st : state) =>
+    P (X !-> aeval st a ≀ st)
+
+notation P "[" X "|->" a "]" => (assertion_sub X a P)
+
+theorem hoare_asgn : forall Q X a,
+  valid_hoare_triple (Q [X |-> a]) (X ::= a) Q -- {{Q [X |-> a]}} X := a {{Q}}.
+  := by
+  unfold valid_hoare_triple
+  intros Q X a st st' HE HQ
+  cases HE
+  . rename_i n Ha
+    unfold assertion_sub at HQ
+    rw [<- Ha]
+    apply HQ
+
+theorem assertion_sub_example :
+  valid_hoare_triple
+    (assertion_sub X (X + 1) (fun (st) => ((st X) < 5))) -- (X < 5) [X |-> X + 1]
+    (X ::= X + 1)
+    (fun (st) => ((st X) < 5)) -- X < 5
+   := by
+  apply hoare_asgn
+
+
+theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
+    valid_hoare_triple P' c Q -> -- {{P'}} c {{Q}} ->
+    (P ->> P') ->
+    valid_hoare_triple P c Q -- {{P}} c {{Q}}.
+    := by
+  unfold valid_hoare_triple
+  unfold assert_implies
+  intros P P' Q c Hhoare Himp st st' Heval Hpre
+  apply Hhoare st
+  apply Heval
+  apply Himp
+  apply Hpre
+
+theorem hoare_consequence_post : forall (P Q Q' : Assertion) c,
+  valid_hoare_triple P c Q' -> -- {{P}} c {{Q'}} ->
+  (Q' ->> Q) ->
+  valid_hoare_triple P c Q -- {{P}} c {{Q}}.
+  := by
+  unfold valid_hoare_triple
+  unfold assert_implies
+  intros P Q Q' c Hhoare Himp st st' Heval Hpre
+  apply Himp
+  apply Hhoare
+  apply Heval
+  apply Hpre
+
+theorem hoare_consequence : forall (P P' Q Q' : Assertion) c,
+  valid_hoare_triple P' c Q' -> -- {{P'}} c {{Q'}} ->
+  (P ->> P') ->
+  (Q' ->> Q) ->
+  valid_hoare_triple P c Q -- {{P}} c {{Q}}.
+  := by
+  intros P P' Q Q' c Htriple Hpre Hpost
+  apply hoare_consequence_pre P P' Q -- with (P' := P')
+  apply hoare_consequence_post P' Q Q'
+  apply Htriple
+  apply Hpost
+  apply Hpre
 
 ----------- END HOARE ------------------------
 
