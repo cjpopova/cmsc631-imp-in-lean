@@ -385,6 +385,7 @@ def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
 
 notation:max "⦃" P "⦄" c "⦃" Q "⦄" => (valid_hoare_triple P c Q) -- (this doesn't work) double braces with {{ }}
 
+-- Example hoare proof
 theorem hoare_post_true : forall (P Q : Assertion) c,
   (forall st, Q st) ->
   (valid_hoare_triple P c Q) --(⦃P⦄ c ⦃Q⦄)
@@ -394,6 +395,29 @@ theorem hoare_post_true : forall (P Q : Assertion) c,
   intros st st' H0 H1
   apply H st'
 
+theorem hoare_skip : forall P, (valid_hoare_triple P CSkip P) := by
+  intros P st st' H HP
+  cases H
+  . apply HP
+
+theorem hoare_seq : forall P Q R c1 c2,
+    (valid_hoare_triple Q c2 R) ->
+    (valid_hoare_triple P c1 Q) ->
+    (valid_hoare_triple P (c1 ;; c2) R) := by
+  unfold valid_hoare_triple
+  intros P Q R c1 c2 H1 H2 st st' H12 Pre
+  cases H12
+  . apply H1 st'
+    rename_i st'' a a1
+    sorry
+
+/-Proof.
+  unfold valid_hoare_triple.
+  intros P Q R c1 c2 H1 H2 st st' H12 Pre.
+  inversion H12; subst.
+  eauto. (* automatically do stuff with H1 and H2*)
+Qed.
+-/
 
 ----------- END HOARE ------------------------
 
