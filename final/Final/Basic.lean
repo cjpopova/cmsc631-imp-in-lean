@@ -405,10 +405,12 @@ theorem ceval_deterministic: ∀ c st st1 st2,
   st1 = st2 := by
   intros c st st1 st2 E1 E2
   revert st2
-  induction E1; intros st2 E2; cases E2; subst
+  induction E1; intros st2 E2; cases E2
+  · rfl
+  · intros st2 H
+    cases H
+    rename n
  /--/
- 1608   induction E1; intros st2 E2; inversion E2; subst.
- 1609   - (* E_Skip *) reflexivity.
  1610   - (* E_Asgn *) reflexivity.
  1611   - (* E_Seq *)
  1612     rewrite (IHE1_1 st'0 H1) in *.
