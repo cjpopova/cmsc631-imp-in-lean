@@ -1,5 +1,6 @@
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Finsupp.AList
+import Mathlib.Logic.Function.Basic
 
 def total_map (A : Type) := String -> A
 
@@ -407,12 +408,7 @@ theorem hoare_seq : forall P Q R c1 c2,
   unfold valid_hoare_triple
   intros P Q R c1 c2 H1 H2 st st' H12 Pre
   cases H12
-  . rename_i st'' HC1 HC2
-    apply H1 st'' st'
-    apply HC2
-    apply H2 st st''
-    apply HC1
-    apply Pre
+  . aesop
 
 def assertion_sub (X : String) (a : aexp) (P:Assertion) : Assertion :=
   fun (st : state) =>
@@ -431,7 +427,7 @@ theorem hoare_asgn : forall Q X a,
     rw [<- Ha]
     apply HQ
 
-theorem assertion_sub_example :
+lemma assertion_sub_example :
   valid_hoare_triple
     (assertion_sub X (X + 1) (fun (st) => ((st X) < 5))) -- (X < 5) [X |-> X + 1]
     (X ::= X + 1)
@@ -447,11 +443,8 @@ theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
     := by
   unfold valid_hoare_triple
   unfold assert_implies
-  intros P P' Q c Hhoare Himp st st' Heval Hpre
-  apply Hhoare st
-  apply Heval
-  apply Himp
-  apply Hpre
+  aesop
+
 
 theorem hoare_consequence_post : forall (P Q Q' : Assertion) c,
   valid_hoare_triple P c Q' -> -- {{P}} c {{Q'}} ->
@@ -461,10 +454,7 @@ theorem hoare_consequence_post : forall (P Q Q' : Assertion) c,
   unfold valid_hoare_triple
   unfold assert_implies
   intros P Q Q' c Hhoare Himp st st' Heval Hpre
-  apply Himp
-  apply Hhoare
-  apply Heval
-  apply Hpre
+  aesop
 
 theorem hoare_consequence : forall (P P' Q Q' : Assertion) c,
   valid_hoare_triple P' c Q' -> -- {{P'}} c {{Q'}} ->
@@ -478,6 +468,44 @@ theorem hoare_consequence : forall (P P' Q Q' : Assertion) c,
   apply Htriple
   apply Hpost
   apply Hpre
+
+lemma hoare_asgn_example3 : forall (a:aexp) (n:Nat),
+  valid_hoare_triple (fun (st) => a = (ANum n)) --{{a = n}}
+    ((X ::= a);; skip)
+  (fun (st) => st X = n) -- {{X = n}}.
+  := by
+  intros a n
+  apply hoare_seq
+  . apply hoare_skip
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . unfold assertion_sub
+      unfold t_update
+      intros st H
+      simp
+      aesop
+
+def bassertion (b:bexp) : Assertion :=
+  fun st => (beval st b = true)
+
+lemma bexp_eval_false : forall (b:bexp) st,
+  beval st b = false -> ¬ ((bassertion b) st) := by
+    intros b st H
+    unfold bassertion
+    rw [H]
+    aesop
+
+--#print valid_hoare_triple
+
+theorem hoare_if : forall P Q b c1 c2,
+  valid_hoare_triple (fun st => P st /\ (bassertion b st)) c1 Q ->
+  valid_hoare_triple (fun st => P st /\ ¬ (bassertion b st)) c2 Q ->
+  valid_hoare_triple P (if b then c1 else c2 endL) Q
+  := by
+  intros P q b c1 c2 HTrue HFalse st st' HE HP
+  cases HE
+  . aesop
+  . sorry -- need to use bexp_eval_false directly or add it to the aesop hint database
 
 ----------- END HOARE ------------------------
 
