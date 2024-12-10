@@ -506,7 +506,7 @@ theorem hoare_if : forall P Q b c1 c2,
   . aesop
   . apply HFalse
     . aesop
-    . apply And.intro
+    . constructor
       . apply HP
       . apply bexp_eval_false; assumption
 
@@ -521,10 +521,28 @@ lemma if_example :
   := by
   unfold valid_hoare_triple
   apply hoare_if
-  . intros st st' Hy Hx
-    sorry
-  . intros st st' Hy Hx
-    sorry
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . unfold assert_implies
+      unfold assertion_sub
+      unfold t_update
+      unfold bassertion
+      simp
+      intros st H
+      have x_eq_0 : (st "X") = 0 := by sorry
+      rw [x_eq_0]
+      aesop
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . unfold assert_implies
+      unfold assertion_sub
+      unfold t_update
+      unfold bassertion
+      simp
+      intros st H
+      have x_neq_0 : ¬ ((st "X") = 0) := by sorry
+      rw [x_neq_0]
+      aesop
 
 /- Proof.
   apply hoare_if.
@@ -533,12 +551,14 @@ lemma if_example :
     + apply hoare_asgn.
     + assertion_auto. (* no progress *)
       unfold "->>", assertion_sub, t_update, bassertion.
-      simpl. intros st [_ H]. apply eqb_eq in H.
+      simpl.
+      intros st [_ H].
+      apply eqb_eq in H. <- we are here
       rewrite H. lia.
   - (* Else *)
     eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assertion_auto.
+    + assertion_auto. <- we are here
 -/
 
 
