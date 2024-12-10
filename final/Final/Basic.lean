@@ -256,10 +256,10 @@ notation: max (priority := high) x "+" y => APlus x y -- (in custom com at level
 notation: max (priority := high) x "-" y => AMinus x y  -- (in custom com at level 50, left associativity)
 notation: max (priority := high) x "*" y => AMult x y -- (in custom com at level 40, left associativity)
 -- notation: max "true'" => true -- (at level 1)
-notation: max (priority := high) "True" => BTrue -- (in custom com at level 0)
+-- notation: max (priority := high) "True" => BTrue -- (in custom com at level 0)
 -- notation: max "'false'" => false (at level 1)
 notation: max (priority := high) "False" => BFalse -- (in custom com at level 0)
-notation: max (priority := high) x "<=" y => BLe x y -- (in custom com at level 70, no associativity)
+--notation: max (priority := high) x "<=" y => BLe x y -- (in custom com at level 70, no associativity)
 notation: max (priority := high) x ">" y => BGt x y -- (in custom com at level 70, no associativity)
 notation: max (priority := high) x "==" y => BEq x y --(in custom com at level 70, no associativity)
 notation: max (priority := high) x "<>" y => BNeq x y -- (in custom com at level 70, no associativity)
@@ -280,7 +280,7 @@ section
 open Test
 def example_aexp111 : aexp := <{(X * 2)}>
 def example_aexp : aexp := <{3 + (X * 2) }>
-def example_bexp : bexp := <{ True && ~(X <= 4) }>
+--def example_bexp : bexp := <{ BTrue && ~(X <= 4) }>
 end
 
 -- Open the scope for `com_scope`
@@ -384,7 +384,7 @@ def valid_hoare_triple (P : Assertion) (c : com) (Q : Assertion) : Prop :=
   (st =[ c ]=> st') -> P st -> (Q st')
 
 -- This notation doesn't work.
-notation:max "{{" P "}}" c "{{" Q "}}" => (valid_hoare_triple P c Q)
+-- notation:max "{{" P "}}" c "{{" Q "}}" => (valid_hoare_triple P c Q)
 
 -- Example hoare proof
 theorem hoare_post_true : forall (P Q : Assertion) c,
@@ -488,14 +488,13 @@ lemma hoare_asgn_example3 : forall (a:aexp) (n:Nat),
 def bassertion (b:bexp) : Assertion :=
   fun st => (beval st b = true)
 
+--@[aesop safe]
 lemma bexp_eval_false : forall (b:bexp) st,
   beval st b = false -> ¬ ((bassertion b) st) := by
     intros b st H
     unfold bassertion
     rw [H]
     aesop
-
---#print valid_hoare_triple
 
 theorem hoare_if : forall P Q b c1 c2,
   valid_hoare_triple (fun st => P st /\ (bassertion b st)) c1 Q ->
@@ -505,7 +504,43 @@ theorem hoare_if : forall P Q b c1 c2,
   intros P q b c1 c2 HTrue HFalse st st' HE HP
   cases HE
   . aesop
-  . sorry -- need to use bexp_eval_false directly or add it to the aesop hint database
+  . apply HFalse
+    . aesop
+    . apply And.intro
+      . apply HP
+      . apply bexp_eval_false; assumption
+
+lemma if_example :
+  valid_hoare_triple
+    (fun st => True) -- {{True}}
+    (if (X == 0)
+      then (Y ::= 2)
+      else (Y ::= X + 1)
+    endL)
+    (fun st => (st "X") <= (st Y)) -- {{X <= Y}} -- CJP: I don't why this notation works
+  := by
+  unfold valid_hoare_triple
+  apply hoare_if
+  . intros st st' Hy Hx
+    sorry
+  . intros st st' Hy Hx
+    sorry
+
+/- Proof.
+  apply hoare_if.
+  - (* Then *)
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assertion_auto. (* no progress *)
+      unfold "->>", assertion_sub, t_update, bassertion.
+      simpl. intros st [_ H]. apply eqb_eq in H.
+      rewrite H. lia.
+  - (* Else *)
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assertion_auto.
+-/
+
 
 ----------- END HOARE ------------------------
 
