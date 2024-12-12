@@ -201,6 +201,7 @@ inductive bexp where
 
 open aexp
 
+@[simp]
 def aeval (st: state)(a : aexp) : Nat :=
   match a with
   | ANum n => n
@@ -210,6 +211,7 @@ def aeval (st: state)(a : aexp) : Nat :=
   | AMult  a1 a2 => (aeval st a1) * (aeval st a2)
 
 open bexp
+@[simp]
 def beval (st: state)(b : bexp) : Bool :=
   match b with
   | BTrue       => true
@@ -350,6 +352,7 @@ def assert_implies (P Q : Assertion) : Prop := forall st, P st -> Q st
 notation:max P "->>" Q   => (assert_implies P Q)
 --notation:max P "<<->>" Q => (P ->> Q /\ Q ->> P)
 
+
 inductive ceval : com -> state -> state -> Prop where
   | E_Skip : forall st,
       ceval skip st st
@@ -488,7 +491,8 @@ lemma hoare_asgn_example3 : forall (a:aexp) (n:Nat),
 def bassertion (b:bexp) : Assertion :=
   fun st => (beval st b = true)
 
---@[aesop safe]
+
+@[aesop unsafe 50% apply]
 lemma bexp_eval_false : forall (b:bexp) st,
   beval st b = false -> ¬ ((bassertion b) st) := by
     intros b st H
@@ -513,7 +517,7 @@ theorem hoare_if : forall P Q b c1 c2,
 lemma if_example :
   valid_hoare_triple
     (fun st => True) -- {{True}}
-    (if (X == 0)
+    (if ("X" == 0)
       then (Y ::= 2)
       else (Y ::= X + 1)
     endL)
@@ -529,9 +533,7 @@ lemma if_example :
       unfold bassertion
       simp
       intros st H
-      have x_eq_0 : (st "X") = 0 := by sorry
-      rw [x_eq_0]
-      aesop
+      by_cases (Y="X") <;> try aesop
   . apply hoare_consequence_pre
     . apply hoare_asgn
     . unfold assert_implies
