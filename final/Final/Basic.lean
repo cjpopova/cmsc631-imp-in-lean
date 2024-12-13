@@ -514,6 +514,9 @@ theorem hoare_if : forall P Q b c1 c2,
       . apply HP
       . apply bexp_eval_false; assumption
 
+-- CJP: I'm sure this exists in the standard library, but I can't find it.
+lemma implies_false : ¬ A = B -> (A = B) = false := by aesop
+
 lemma if_example :
   valid_hoare_triple
     (fun st => True) -- {{True}}
@@ -542,27 +545,29 @@ lemma if_example :
       unfold bassertion
       simp
       intros st H
-      have x_neq_0 : ¬ ((st "X") = 0) := by sorry
-      rw [x_neq_0]
-      aesop
+      by_cases (Y="X")
+      . rename_i H1
+        rw [H1]
+        simp
+      . rename_i H1
+        have H1' : (Y = "X") = false := by sorry --apply implies_false
+        simp_rw [H1'] -- regular rw doesn't work here for some reason
+        simp
+        sorry
 
-/- Proof.
-  apply hoare_if.
-  - (* Then *)
-    eapply hoare_consequence_pre.
-    + apply hoare_asgn.
-    + assertion_auto. (* no progress *)
-      unfold "->>", assertion_sub, t_update, bassertion.
-      simpl.
-      intros st [_ H].
-      apply eqb_eq in H. <- we are here
-      rewrite H. lia.
-  - (* Else *)
-    eapply hoare_consequence_pre.
-    + apply hoare_asgn.
-    + assertion_auto. <- we are here
--/
+theorem hoare_while : forall P (b:bexp) c,
+  valid_hoare_triple (fun st => P /\ (bassertion b st)) c (fun st => P) ->
+  valid_hoare_triple (fun st => P) (while b doW c endL) (fun st => P /\ ¬ (bassertion b st))
+  := by
+  intros P b c Hhoare st st' Heval HP
+  --remember x as y eqn:h
+  generalize Horig : (while b doW c endL) = original_command
+  rw [Horig] at Heval -- because https://leanprover-community.github.io/archive/stream/270676-lean4/topic/induction.20with.20fixed.20index.html
+  induction Heval <;> aesop
+  . unfold bassertion at a_1
+    aesop
 
+-- TODO: WHILE EXAMPLE
 
 ----------- END HOARE ------------------------
 
