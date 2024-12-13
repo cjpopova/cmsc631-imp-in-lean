@@ -545,7 +545,7 @@ lemma if_example :
       unfold bassertion
       simp
 
-
+@[aesop 50 unsafe 60%]
 theorem hoare_while : forall P (b:bexp) c,
   valid_hoare_triple (fun st => P /\ (bassertion b st)) c (fun st => P) ->
   valid_hoare_triple (fun st => P) (while b doW c endL) (fun st => P /\ ¬ (bassertion b st))
