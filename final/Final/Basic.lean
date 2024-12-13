@@ -521,10 +521,10 @@ lemma if_example :
   valid_hoare_triple
     (fun st => True) -- {{True}}
     (if ("X" == 0)
-      then (Y ::= 2)
-      else (Y ::= "X" + 1)
+      then ("Y" ::= 2)
+      else ("Y" ::= "X" + 1)
     endL)
-    (fun st => (st "X") <= (st Y)) -- {{X <= Y}} -- CJP: I don't why this notation works
+    (fun st => (st "X") <= (st "Y")) -- {{X <= Y}} -- CJP: I don't why this notation works
   := by
   unfold valid_hoare_triple
   apply hoare_if
@@ -536,7 +536,7 @@ lemma if_example :
       unfold bassertion
       simp
       intros st H
-      by_cases (Y="X") <;> try aesop
+      by_cases ("Y"="X") <;> try aesop
   . apply hoare_consequence_pre
     . apply hoare_asgn
     . unfold assert_implies
@@ -544,8 +544,6 @@ lemma if_example :
       unfold t_update
       unfold bassertion
       simp
-      intros st H
-      by_cases (Y="X") <;> try aesop
 
 
 theorem hoare_while : forall P (b:bexp) c,
