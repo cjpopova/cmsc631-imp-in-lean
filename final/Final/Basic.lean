@@ -551,14 +551,35 @@ theorem hoare_while : forall P (b:bexp) c,
   valid_hoare_triple (fun st => P) (while b doW c endL) (fun st => P /\ ¬ (bassertion b st))
   := by
   intros P b c Hhoare st st' Heval HP
-  --remember x as y eqn:h
   generalize Horig : (while b doW c endL) = original_command
   rw [Horig] at Heval -- because https://leanprover-community.github.io/archive/stream/270676-lean4/topic/induction.20with.20fixed.20index.html
   induction Heval <;> aesop
   . unfold bassertion at a_1
     aesop
 
--- TODO: WHILE EXAMPLE
+lemma while_example : -- this example comes from Hoare.v
+  valid_hoare_triple
+    (fun st => (st "X") <= 3)  -- {{X <= 3}}
+    while (BLe "X" 2) doW
+      (X ::= "X" + 1)
+    endL
+    (bassertion ("X" == 3)) -- {{X = 3}}.
+:= by
+  unfold valid_hoare_triple
+  apply hoare_consequence_post
+  . apply hoare_while;
+    sorry
+  . sorry
+  . sorry
+
+/-Proof.
+  eapply hoare_consequence_post.
+  - apply hoare_while.
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assertion_auto''.
+  - assertion_auto''.
+Qed.-/
 
 ----------- END HOARE ------------------------
 
