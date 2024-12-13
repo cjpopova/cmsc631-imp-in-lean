@@ -522,7 +522,7 @@ lemma if_example :
     (fun st => True) -- {{True}}
     (if ("X" == 0)
       then (Y ::= 2)
-      else (Y ::= X + 1)
+      else (Y ::= "X" + 1)
     endL)
     (fun st => (st "X") <= (st Y)) -- {{X <= Y}} -- CJP: I don't why this notation works
   := by
@@ -545,15 +545,8 @@ lemma if_example :
       unfold bassertion
       simp
       intros st H
-      by_cases (Y="X")
-      . rename_i H1
-        rw [H1]
-        simp
-      . rename_i H1
-        have H1' : (Y = "X") = false := by sorry --apply implies_false
-        simp_rw [H1'] -- regular rw doesn't work here for some reason
-        simp
-        sorry
+      by_cases (Y="X") <;> try aesop
+
 
 theorem hoare_while : forall P (b:bexp) c,
   valid_hoare_triple (fun st => P /\ (bassertion b st)) c (fun st => P) ->
