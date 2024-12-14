@@ -546,10 +546,10 @@ lemma if_example :
       simp
 
 @[aesop 50 unsafe 60%]
-theorem hoare_while : forall P (b:bexp) c,
-  valid_hoare_triple (fun st => P /\ (bassertion b st)) c (fun st => P) ->
-  valid_hoare_triple (fun st => P) (while b doW c endL) (fun st => P /\ ¬ (bassertion b st))
-  := by
+theorem hoare_while : forall (P:Assertion) (b:bexp) c,
+  valid_hoare_triple (fun st => P st /\ bassertion b st) c P ->
+  valid_hoare_triple P (while b doW c endL) (fun st => P st /\ ¬ (bassertion b st))
+  := by sorry
   intros P b c Hhoare st st' Heval HP
   generalize Horig : (while b doW c endL) = original_command
   rw [Horig] at Heval -- because https://leanprover-community.github.io/archive/stream/270676-lean4/topic/induction.20with.20fixed.20index.html
