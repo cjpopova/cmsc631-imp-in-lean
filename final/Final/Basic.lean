@@ -378,7 +378,7 @@ inductive ceval : com -> state -> state -> Prop where
       beval st b = true ->
       ceval c st st' ->
       ceval (while b doW c endL) st' st'' ->
-      ceval (while b doW c endL) st  st''
+      ceval (while b doW c endL) st st''
 
 notation:max st "=[" c "]=>" st2 => (ceval c st st2)
 
@@ -549,13 +549,32 @@ lemma if_example :
 theorem hoare_while : forall (P:Assertion) (b:bexp) c,
   valid_hoare_triple (fun st => P st /\ bassertion b st) c P ->
   valid_hoare_triple P (while b doW c endL) (fun st => P st /\ ¬ (bassertion b st))
-  := by sorry
+  := by
   intros P b c Hhoare st st' Heval HP
   generalize Horig : (while b doW c endL) = original_command
   rw [Horig] at Heval -- because https://leanprover-community.github.io/archive/stream/270676-lean4/topic/induction.20with.20fixed.20index.html
-  induction Heval <;> aesop
-  . unfold bassertion at a_1
-    aesop
+  induction Heval <;> cases Horig <;> aesop
+  · unfold bassertion at a_1
+    rw [a] at a_1
+    contradiction
+  · unfold valid_hoare_triple at Hhoare
+    apply Hhoare at a_1
+    simp at a_1
+    apply a_1 at HP
+    unfold bassertion at HP
+    apply HP at a
+    apply a_ih_1 at a
+    cases a
+    rename_i l r
+    apply l
+  · unfold valid_hoare_triple at Hhoare
+    apply Hhoare at a_1
+    simp at a_1
+    apply a_1 at HP
+    unfold bassertion at HP
+    apply HP at a
+    contradiction
+
 
 lemma while_example : -- this example comes from Hoare.v
   valid_hoare_triple
