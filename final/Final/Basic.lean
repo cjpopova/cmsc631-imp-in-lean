@@ -638,36 +638,4 @@ theorem ceval_deterministic: ∀ c st st1 st2,
     have test := a_iht1 sttt' as1; aesop
   . have newih := a_ih st'_1 a_4; aesop
 
-
-
-
-
-
-
-
-
-
-
- /--/
- 1610   - (* E_Asgn *) reflexivity.
- 1611   - (* E_Seq *)
- 1612     rewrite (IHE1_1 st'0 H1) in *.
- 1613     apply IHE1_2. assumption.
- 1614   - (* E_IfTrue, b evaluates to true *)
- 1615       apply IHE1. assumption.
- 1616   - (* E_IfTrue,  b evaluates to false (contradiction) *)
- 1617       rewrite H in H5. discriminate.
- 1618   - (* E_IfFalse, b evaluates to true (contradiction) *)
- 1619       rewrite H in H5. discriminate.
- 1620   - (* E_IfFalse, b evaluates to false *)
- 1621       apply IHE1. assumption.
- 1622   - (* E_WhileFalse, b evaluates to false *)
- 1623     reflexivity.
- 1624   - (* E_WhileFalse, b evaluates to true (contradiction) *)
- 1625     rewrite H in H2. discriminate.
- 1626   - (* E_WhileTrue, b evaluates to false (contradiction) *)
- 1627     rewrite H in H4. discriminate.
- 1628   - (* E_WhileTrue, b evaluates to true *)
- 1629     rewrite (IHE1_1 st'0 H3) in *.
- 1630     apply IHE1_2. assumption.  Qed. -/
 end with_state
