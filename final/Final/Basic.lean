@@ -1,6 +1,7 @@
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Finsupp.AList
 import Mathlib.Logic.Function.Basic
+import Mathlib.Tactic.Linarith.Frontend
 
 def total_map (A : Type) := String -> A
 
@@ -567,19 +568,23 @@ lemma while_example : -- this example comes from Hoare.v
 := by
   unfold valid_hoare_triple
   apply hoare_consequence_post
-  . apply hoare_while;
-    sorry
-  . sorry
-  . sorry
+  . apply hoare_while
+    apply hoare_consequence_pre
+    . apply hoare_asgn
+    . unfold assert_implies
+      unfold  assertion_sub
+      unfold t_update
+      unfold bassertion
+      simp
+      intros st
+      by_cases (X="X") <;> try aesop
+  . unfold bassertion
+    simp
+    intros st
+    by_cases (X="X") <;> try aesop
+    . linarith
+    . linarith
 
-/-Proof.
-  eapply hoare_consequence_post.
-  - apply hoare_while.
-    eapply hoare_consequence_pre.
-    + apply hoare_asgn.
-    + assertion_auto''.
-  - assertion_auto''.
-Qed.-/
 
 ----------- END HOARE ------------------------
 
@@ -590,12 +595,12 @@ Qed.-/
 theorem ceval_example1:
     empty_st =[
        ("X" ::= (ANum 2));;
-      if ("X" <= 1)
+      if (BLe "X" 1)
         then "Y" ::= 3
         else "Z" ::= 4
       endL
    ]=> ("Z" !-> 4 ≀ ("X" !-> 2 ≀ empty_st)) := by
-  apply ceval.E_Seq (CAsgn "X" (ANum 2)) (CIf ("X" <= 1) ("Y" ::= 3) ("Z" ::= 4)) empty_st ("X" !-> 2 ≀ empty_st) ("Z" !-> 4 ≀ ("X" !-> 2 ≀ empty_st))
+  apply ceval.E_Seq (CAsgn "X" (ANum 2)) (CIf (BLe "X" 1) ("Y" ::= 3) ("Z" ::= 4)) empty_st ("X" !-> 2 ≀ empty_st) ("Z" !-> 4 ≀ ("X" !-> 2 ≀ empty_st))
   · apply ceval.E_Asgn
     rfl
   · apply ceval.E_IfFalse
